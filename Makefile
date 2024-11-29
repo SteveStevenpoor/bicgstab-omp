@@ -1,7 +1,8 @@
 BIN_NAME	= bcgstab
 
 SRCS		= main.cpp\
-			  src/ParallelOperations.cpp
+			  src/ParallelOperations.cpp\
+			  src/ParallelOperations_test.cpp
 
 HEADERS		= include/ParallelOperations.h
 
