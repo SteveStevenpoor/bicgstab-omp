@@ -16,11 +16,12 @@ public:
 
   static VectorXd mv_product(const SparseMatrix<double, Eigen::RowMajor> &A,
                              const VectorXd &v);
+
   static void BiCGStab(const SparseMatrix<double, Eigen::RowMajor> &A,
-                       VectorXd &x, const VectorXd &b, const double &tolerance,
-                       const int &max_iter);
+                       VectorXd &x, const VectorXd &b, double &tolerance,
+                       const int &max_iter, int &iter);
 
   static void Eigen_BiCGStab(const SparseMatrix<double, Eigen::RowMajor> &A,
                              VectorXd &x, const VectorXd &b,
-                             const double &tolerance, const int &max_iter);
+                             double &tolerance, const int &max_iter, int &iter);
 };

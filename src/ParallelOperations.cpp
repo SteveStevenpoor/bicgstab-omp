@@ -20,9 +20,9 @@ ParallelOperations::mv_product(const SparseMatrix<double, Eigen::RowMajor> &A,
 
 void ParallelOperations::BiCGStab(
     const SparseMatrix<double, Eigen::RowMajor> &A, VectorXd &x,
-    const VectorXd &b, const double &tolerance, const int &max_iter) {
+    const VectorXd &b, double &tolerance, const int &max_iter, int& iter) {
 
-  size_t n = A.cols();
+  int n = A.cols();
 
   VectorXd r = b - mv_product(A, x);
   VectorXd r0 = r;
@@ -55,7 +55,7 @@ void ParallelOperations::BiCGStab(
 
     // In case an old residual is almost orthogonal to a new residual.
     // If we don't restart, the convergence speed will be too low .
-    if (std::abs(rho) < eps2 * r0_norm) {
+    if (std::fabs(rho) < eps2 * r0_norm) {
       r = b - mv_product(A, x);
       r0 = r;
       rho = r0_norm = r.squaredNorm();
@@ -84,15 +84,19 @@ void ParallelOperations::BiCGStab(
 
     ++current_iter;
   }
+  tolerance = std::sqrt(r.squaredNorm()/b_norm);
+  iter = current_iter;
 }
 
 void ParallelOperations::Eigen_BiCGStab(
     const SparseMatrix<double, Eigen::RowMajor> &A, VectorXd &x,
-    const VectorXd &b, const double &tolerance, const int &max_iter) {
+    const VectorXd &b, double &tolerance, const int &max_iter, int &iter) {
   BiCGSTAB<SparseMatrix<double, Eigen::RowMajor>, Eigen::IdentityPreconditioner>
       solver;
   solver.setMaxIterations(max_iter);
   solver.setTolerance(tolerance);
   solver.compute(A);
   x = solver.solve(b);
+  tolerance = solver.error();
+  iter = solver.iterations();
 }

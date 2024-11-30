@@ -2,6 +2,7 @@
 #include <Eigen>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <random>
 
 
 using namespace Eigen;
@@ -9,18 +10,23 @@ using namespace Eigen;
 
 class ParallelOperationsTest : public testing::Test {
  protected:
-    int n = 1000;
+    int n = 110;
     SparseMatrix<double, Eigen::RowMajor> A;
     VectorXd x, y, b;
 
     ParallelOperationsTest() : A(SparseMatrix<double, Eigen::RowMajor>(n, n)),
                                x(VectorXd(n)), y(VectorXd(n)), b(VectorXd::Ones(n)) {
+        double lower_bound = 0;
+        double upper_bound = 1;
+        std::uniform_real_distribution<double> unif(lower_bound,upper_bound);
+        std::default_random_engine re;
+
         for (int i = 0; i < n; i++) {
-            A.insert(i, i) = static_cast<double>(i) + 123.172 + i*i;
-            if (i > 0 && i < n - 1) {
-                A.insert(i, i + 1) = i*i + 973.1;
-                A.insert(i, i - 1) = i*i + 324.12324;
-            }
+            A.insert(i, i) = unif(re) + 1;
+            if (i - 2 >= 0) A.insert(i, i - 2) = unif(re);
+            if (i - 1 >= 0) A.insert(i, i - 1) = unif(re);
+            if (i + 1 < n) A.insert(i, i + 1) = unif(re);
+            if (i + 2 < n) A.insert(i, i + 2) = unif(re);
         }
     }
 
@@ -62,8 +68,23 @@ TEST_F(ParallelOperationsTest, TestingMVProduct) {
 TEST_F(ParallelOperationsTest, TestBiCGStab) {
     double tolerance = 1e-6;
     int max_iter = 2 * n;
-    ParallelOperations::BiCGStab(A, x, b, tolerance, max_iter);
-    ParallelOperations::Eigen_BiCGStab(A, y, b, tolerance, max_iter);
+    int iter = 0;
+
+    ParallelOperations::BiCGStab(A, x, b, tolerance, max_iter*4, iter);
+    std::cout << "BICGSTAB ITER: " << iter << std::endl;
+    std::cout << "BICGSTAB TOLERANCE: " << tolerance << std::endl;
+
+    tolerance = 1e-6;
+    iter = 0;
+
+    ParallelOperations::Eigen_BiCGStab(A, y, b, tolerance, max_iter*4, iter);
+    std::cout << "BICGSTAB EIGEN ITER: " << iter << std::endl;
+    std::cout << "BICGSTAB EIGEN TOLERANCE: " << tolerance << std::endl;
+
+
+    // for (int i = 0; i < n; i++) {
+    //     std::cout << x[i] << "    " << y[i] << std::endl;
+    // }
 
     EXPECT_TRUE(isVectorXdEq(x, y));
     EXPECT_FALSE(isVectorXdEq(x, b));
